@@ -48,63 +48,298 @@ def preprocess(img_bytes: bytes) -> np.ndarray:
 # ========= FRONTEND: Página web en "/" =========
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    # NOTA: aquí va todo el HTML + JS del frontend
     return """
     <!DOCTYPE html>
-    <html lang="es">
+    <html lang='es'>
     <head>
-      <meta charset="UTF-8" />
-      <title>Clasificador MNIST</title>
+      <meta charset='UTF-8' />
+      <title>Aprende los números</title>
       <style>
+        * {
+          box-sizing: border-box;
+        }
+
         body {
-          font-family: Arial, sans-serif;
-          text-align: center;
-          margin-top: 30px;
+          margin: 0;
+          font-family: "Comic Sans MS", "Poppins", system-ui, sans-serif;
+          background: linear-gradient(135deg, #fef3c7, #bfdbfe);
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
         }
+
+        .app {
+          width: 100%;
+          max-width: 960px;
+          background: #ffffff;
+          border-radius: 24px;
+          box-shadow: 0 18px 40px rgba(0, 0, 0, 0.15);
+          padding: 22px 20px 24px;
+          border: 4px solid #fbbf24;
+        }
+
+        .header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 16px;
+        }
+
+        .title-left {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .title-left h1 {
+          margin: 0;
+          font-size: 1.8rem;
+          color: #1f2937;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .title-left h1 span {
+          font-size: 2rem;
+        }
+
+        .subtitle {
+          font-size: 0.95rem;
+          color: #4b5563;
+        }
+
+        .chip {
+          background: #fef9c3;
+          border-radius: 999px;
+          padding: 6px 12px;
+          font-size: 0.8rem;
+          color: #92400e;
+          border: 1px dashed #f59e0b;
+        }
+
+        .layout {
+          display: grid;
+          grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+          gap: 18px;
+        }
+
+        .card {
+          background: #eff6ff;
+          border-radius: 20px;
+          padding: 14px 14px 16px;
+          border: 2px solid #bfdbfe;
+        }
+
+        .card:nth-child(1) {
+          background: #e0f2fe;
+        }
+
+        .card h2 {
+          margin: 0 0 4px;
+          font-size: 1.1rem;
+          color: #1f2937;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .card p {
+          margin: 0 0 10px;
+          font-size: 0.9rem;
+          color: #4b5563;
+        }
+
         #canvas {
-          border: 2px solid #333;
-          background: black;
+          border-radius: 18px;
+          border: 3px solid #3b82f6;
+          background: #020617;
           cursor: crosshair;
+          box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
         }
+
+        .controls {
+          display: flex;
+          justify-content: center;
+          gap: 12px;
+          margin-top: 10px;
+          flex-wrap: wrap;
+        }
+
         button {
-          margin: 10px;
-          padding: 8px 16px;
-          font-size: 14px;
+          border: none;
+          border-radius: 999px;
+          padding: 9px 18px;
+          font-size: 0.95rem;
+          font-weight: 600;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: transform 0.08s ease, box-shadow 0.1s ease, background 0.1s ease;
         }
+
+        .btn-primary {
+          background: #22c55e;
+          color: #052e16;
+          box-shadow: 0 10px 18px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-primary:hover {
+          background: #16a34a;
+          transform: translateY(-1px);
+          box-shadow: 0 14px 24px rgba(22, 163, 74, 0.5);
+        }
+
+        .btn-secondary {
+          background: #f97316;
+          color: #fff7ed;
+          box-shadow: 0 10px 18px rgba(249, 115, 22, 0.4);
+        }
+
+        .btn-secondary:hover {
+          background: #ea580c;
+          transform: translateY(-1px);
+          box-shadow: 0 14px 24px rgba(234, 88, 12, 0.5);
+        }
+
+        .result-main {
+          margin-top: 4px;
+          padding: 8px 10px;
+          background: #fef3c7;
+          border-radius: 12px;
+          border: 2px dashed #f59e0b;
+        }
+
+        .result-label {
+          font-size: 0.9rem;
+          color: #92400e;
+        }
+
+        #result {
+          margin-top: 4px;
+          font-size: 1.4rem;
+          font-weight: 700;
+          color: #b91c1c;
+        }
+
+        .metric {
+          margin-top: 10px;
+          font-size: 0.9rem;
+          color: #111827;
+        }
+
+        .metric span {
+          font-weight: 700;
+          color: #2563eb;
+        }
+
         #history {
-          max-width: 400px;
-          margin: 20px auto;
-          text-align: left;
-          border: 1px solid #ddd;
-          padding: 10px;
-          border-radius: 6px;
+          margin-top: 10px;
+          padding-top: 6px;
+          border-top: 2px dotted #93c5fd;
         }
+
         #history h4 {
-          margin-top: 0;
+          margin: 0 0 6px;
+          font-size: 0.95rem;
+          color: #1d4ed8;
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
-        #history ul {
-          padding-left: 20px;
+
+        #history-list {
+          margin: 0;
+          padding-left: 18px;
+          font-size: 0.9rem;
+          max-height: 150px;
+          overflow-y: auto;
+          color: #1f2937;
+        }
+
+        #history-list li {
+          margin-bottom: 3px;
+        }
+
+        .footer-note {
+          margin-top: 10px;
+          font-size: 0.8rem;
+          color: #6b7280;
+        }
+
+        @media (max-width: 780px) {
+          .app {
+            padding: 16px 14px 18px;
+          }
+          .layout {
+            grid-template-columns: minmax(0, 1fr);
+          }
         }
       </style>
     </head>
     <body>
-      <h2>Clasificador de dígitos MNIST 🧠✏️</h2>
-      <p>Dibuja un número (0–9) en blanco sobre fondo negro.</p>
+      <div class='app'>
+        <div class='header'>
+          <div class='title-left'>
+            <h1><span>🎨</span> ¡Juega con los números!</h1>
+            <p class='subtitle'>
+              Niños y niñas pueden practicar cómo escribir los números del <strong>0</strong> al <strong>9</strong>.
+            </p>
+          </div>
+          <div class='chip'>
+            🤖 Modelo de inteligencia artificial con MNIST
+          </div>
+        </div>
 
-      <canvas id="canvas" width="200" height="200"></canvas><br>
+        <div class='layout'>
+          <!-- Lado izquierdo: Canvas -->
+          <div class='card'>
+            <h2>✏️ Dibuja tu número</h2>
+            <p>
+              Usa el lápiz para escribir un número grande y clarito.
+              ¡Luego aprieta el botón verde para que el robot adivine!
+            </p>
+            <canvas id='canvas' width='260' height='260'></canvas>
+            <div class='controls'>
+              <button class='btn-secondary' onclick='clearCanvas()'>
+                🧽 Borrar
+              </button>
+              <button class='btn-primary' onclick='sendImage()'>
+                🤖 Adivinar número
+              </button>
+            </div>
+          </div>
 
-      <button onclick="clearCanvas()">Limpiar</button>
-      <button onclick="sendImage()">Clasificar</button>
+          <!-- Lado derecho: Resultados -->
+          <div class='card'>
+            <h2>🌟 Resultado del robot</h2>
+            <p>
+              Aquí ves qué número cree el robot que escribiste y un listado con tus intentos.
+            </p>
 
-      <h3 id="result"></h3>
+            <div class='result-main'>
+              <div class='result-label'>El robot dice que escribiste:</div>
+              <div id='result'>Dibuja un número y pulsa "Adivinar número".</div>
+            </div>
 
-      <div id="metrics">
-        <p><strong>Predicciones en esta sesión:</strong> <span id="count">0</span></p>
-      </div>
+            <div class='metric'>
+              Veces que has practicado: <span id='count'>0</span>
+            </div>
 
-      <div id="history">
-        <h4>Historial de predicciones</h4>
-        <ul id="history-list"></ul>
+            <div id='history'>
+              <h4>📚 Tus intentos</h4>
+              <ul id='history-list'></ul>
+            </div>
+
+            <div class='footer-note'>
+              Recomendado para niños de 3 a 5 años. Siempre con la compañía de un adulto. 💛
+            </div>
+          </div>
+        </div>
       </div>
 
       <script>
@@ -113,7 +348,7 @@ async def root():
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
 
-        ctx.lineWidth = 18;
+        ctx.lineWidth = 22;
         ctx.lineCap = "round";
         ctx.strokeStyle = "white";
 
@@ -137,7 +372,7 @@ async def root():
           ctx.stroke();
         }
 
-        // --- Táctil (móvil) ---
+        // --- Táctil (móvil / tablet) ---
         canvas.addEventListener("touchstart", (e) => {
           e.preventDefault();
           drawing = true;
@@ -162,15 +397,17 @@ async def root():
         function clearCanvas() {
           ctx.fillStyle = "black";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-          document.getElementById("result").innerText = "";
+          document.getElementById("result").innerText =
+            'Dibuja un número y pulsa "Adivinar número".';
         }
+
         clearCanvas();
 
         function addToHistory(digit, confidence) {
           const ul = document.getElementById("history-list");
           const li = document.createElement("li");
-          li.textContent = `Predicción: ${digit} (confianza: ${confidence.toFixed(3)})`;
-          ul.prepend(li); // agrega al inicio
+          li.textContent = `Número: ${digit}  (confianza: ${confidence.toFixed(2)})`;
+          ul.prepend(li);
         }
 
         function updateCount() {
@@ -179,7 +416,8 @@ async def root():
         }
 
         async function sendImage() {
-          document.getElementById("result").innerText = "Clasificando...";
+          const resultEl = document.getElementById("result");
+          resultEl.innerText = "El robot está pensando... 🤖💭";
 
           const blob = await new Promise(resolve =>
             canvas.toBlob(resolve, "image/png")
@@ -196,21 +434,21 @@ async def root():
 
             if (!res.ok) {
               const text = await res.text();
-              document.getElementById("result").innerText =
-                "Error en la predicción: " + res.status + " " + text;
+              resultEl.innerText =
+                "Ups, hubo un error: " + res.status + " " + text;
               return;
             }
 
             const data = await res.json();
-            document.getElementById("result").innerText =
-              `Predicción: ${data.digit} (confianza: ${data.confidence.toFixed(3)})`;
+            resultEl.innerText =
+              `¡Creo que es el número ${data.digit}! 🎉 (confianza: ${data.confidence.toFixed(2)})`;
 
             addToHistory(data.digit, data.confidence);
             updateCount();
           } catch (err) {
             console.error(err);
-            document.getElementById("result").innerText =
-              "Error al conectar con la API";
+            resultEl.innerText =
+              "No pudimos hablar con el robot. Intenta otra vez. 🛠️";
           }
         }
       </script>
@@ -262,3 +500,4 @@ async def predict(file: UploadFile = File(...)):
     except Exception as e:
         print("Error en /predict:", e)
         raise HTTPException(status_code=500, detail="Error interno al procesar la imagen.")
+
